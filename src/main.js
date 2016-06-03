@@ -13,8 +13,7 @@ Starter tempalte for JS projects
 //==============================================================================
 class App {
   constructor() {
-    this.console = document.getElementById("console");
-    this.console.innerHTML = "This is a starter template for JS projects.";
+    console.log("BEEP BOOP");
   }
 }
 //==============================================================================
