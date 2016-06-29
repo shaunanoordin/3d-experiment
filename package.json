@@ -1,11 +1,11 @@
 {
-  "name": "Starter-JS",
+  "name": "3d-experiment",
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "https://github.com/shaunanoordin/starter-js/"
+    "url": "https://github.com/shaunanoordin/3d-experiment/"
   },
-  "homepage": "https://github.com/shaunanoordin/starter-js/",
+  "homepage": "https://github.com/shaunanoordin/3d-experiment/",
   "babel": {
     "presets": ["es2015"]
   },
