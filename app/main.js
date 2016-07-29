@@ -69,6 +69,16 @@
 	  function App() {
 	    _classCallCheck(this, App);
 
+	    //--------------------------------
+	    this.html = document.getElementById("app");
+	    this.canvas = this.html; //In the original avo-adventure template, this was a separate <canvas> element.
+	    this.boundingBox = undefined; //To be defined by this.updateSize().
+	    this.sizeRatioX = 1;
+	    this.sizeRatioY = 1;
+	    this.width = this.html.width;
+	    this.height = this.html.height;
+	    //--------------------------------
+
 	    //Bind functions to 'this' reference.
 	    //--------------------------------
 	    this.run = this.run.bind(this);
@@ -96,19 +106,17 @@
 
 	    //Bind Events
 	    //--------------------------------
-	    /*if ("onmousedown" in this.canvas && "onmousemove" in this.canvas &&
-	        "onmouseup" in this.canvas) {
+	    if ("onmousedown" in this.canvas && "onmousemove" in this.canvas && "onmouseup" in this.canvas) {
 	      this.canvas.onmousedown = this.onPointerStart.bind(this);
 	      this.canvas.onmousemove = this.onPointerMove.bind(this);
 	      this.canvas.onmouseup = this.onPointerEnd.bind(this);
-	    }    
-	    if ("ontouchstart" in this.canvas && "ontouchmove" in this.canvas &&
-	        "ontouchend" in this.canvas && "ontouchcancel" in this.canvas) {
+	    }
+	    if ("ontouchstart" in this.canvas && "ontouchmove" in this.canvas && "ontouchend" in this.canvas && "ontouchcancel" in this.canvas) {
 	      this.canvas.ontouchstart = this.onPointerStart.bind(this);
 	      this.canvas.ontouchmove = this.onPointerMove.bind(this);
 	      this.canvas.ontouchend = this.onPointerEnd.bind(this);
 	      this.canvas.ontouchcancel = this.onPointerEnd.bind(this);
-	    }*/
+	    }
 	    if ("onkeydown" in window && "onkeyup" in window) {
 	      window.onkeydown = this.onKeyDown.bind(this);
 	      window.onkeyup = this.onKeyUp.bind(this);
@@ -123,7 +131,7 @@
 	    //--------------------------------
 	    this.scene = new THREE.Scene();
 	    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-	    this.camera.rotation.order = "YXZ";
+	    this.camera.rotation.order = "YXZ"; //"YXZ" is good for FPS (gravity-locked) if x-rotation is locked to a min/max.
 	    this.renderer = new THREE.WebGLRenderer();
 	    this.renderer.setSize(window.innerWidth, window.innerHeight);
 	    document.getElementById("app").appendChild(this.renderer.domElement);
@@ -141,6 +149,8 @@
 	    this.addActor("PLANET-G", 10, 0, 0, 1);
 	    this.addActor("PLANET-B", -10, 0, 0, 1);
 	    this.addActor("STAR", 0, -5, 0, 0.2);
+	    this.addActor("PLANET-R", 2, -2, -4, 0.5);
+	    this.addActor("PLANET-R", -2, -2, -4, 0.5);
 	    //--------------------------------
 
 	    //Start!
@@ -154,24 +164,20 @@
 	  _createClass(App, [{
 	    key: "run",
 	    value: function run() {
-	      //Get User Input
+	      //Get User Input: Keyboard Movement
 	      //--------------------------------
 	      var CAMERA_SPEED = 0.2;
 	      var CAMERA_ROTATION_SPEED = 0.01 * Math.PI;
 
-	      if (this.keys[KEY_CODES.UP].state === INPUT_ACTIVE && this.keys[KEY_CODES.DOWN].state !== INPUT_ACTIVE) {
+	      if ((this.keys[KEY_CODES.UP].state || this.keys[KEY_CODES.W].state) === INPUT_ACTIVE && (this.keys[KEY_CODES.DOWN].state && this.keys[KEY_CODES.S].state) !== INPUT_ACTIVE) {
 	        this.camera.rotation.x += CAMERA_ROTATION_SPEED;
-	        //this.camera.position.z -= CAMERA_SPEED;
-	      } else if (this.keys[KEY_CODES.UP].state !== INPUT_ACTIVE && this.keys[KEY_CODES.DOWN].state === INPUT_ACTIVE) {
+	      } else if ((this.keys[KEY_CODES.UP].state && this.keys[KEY_CODES.W].state) !== INPUT_ACTIVE && (this.keys[KEY_CODES.DOWN].state || this.keys[KEY_CODES.S].state) === INPUT_ACTIVE) {
 	        this.camera.rotation.x -= CAMERA_ROTATION_SPEED;
-	        //this.camera.position.z += CAMERA_SPEED;
 	      }
-	      if (this.keys[KEY_CODES.LEFT].state === INPUT_ACTIVE && this.keys[KEY_CODES.RIGHT].state !== INPUT_ACTIVE) {
+	      if ((this.keys[KEY_CODES.LEFT].state || this.keys[KEY_CODES.A].state) === INPUT_ACTIVE && (this.keys[KEY_CODES.RIGHT].state && this.keys[KEY_CODES.D].state) !== INPUT_ACTIVE) {
 	        this.camera.rotation.y += CAMERA_ROTATION_SPEED;
-	        //this.camera.position.x -= CAMERA_SPEED;
-	      } else if (this.keys[KEY_CODES.LEFT].state !== INPUT_ACTIVE && this.keys[KEY_CODES.RIGHT].state === INPUT_ACTIVE) {
+	      } else if ((this.keys[KEY_CODES.LEFT].state && this.keys[KEY_CODES.A].state) !== INPUT_ACTIVE && (this.keys[KEY_CODES.RIGHT].state || this.keys[KEY_CODES.D].state) === INPUT_ACTIVE) {
 	        this.camera.rotation.y -= CAMERA_ROTATION_SPEED;
-	        //this.camera.position.x += CAMERA_SPEED;
 	      }
 
 	      if (this.keys[KEY_CODES.SPACE].state === INPUT_ACTIVE) {
@@ -180,6 +186,22 @@
 	        this.camera.position.x += CAMERA_SPEED * Math.cos(theta) * -Math.sin(phi);
 	        this.camera.position.z += CAMERA_SPEED * Math.cos(theta) * -Math.cos(phi);
 	        this.camera.position.y += CAMERA_SPEED * Math.sin(theta);
+	      }
+	      //--------------------------------
+
+	      //Get User Input: Click on targets
+	      //--------------------------------
+	      if (this.pointer.state === INPUT_ENDED) {
+	        var target = new THREE.Vector2( //This is -1.0 to +1.0 relative to the middle of the screen.
+	        this.pointer.now.x / this.boundingBox.right * 2 - 1, this.pointer.now.y / this.boundingBox.bottom * -2 + 1);
+	        var raycaster = new THREE.Raycaster();
+	        raycaster.setFromCamera(target, this.camera);
+
+	        //Highlight clicked items in white.
+	        var intersects = raycaster.intersectObjects(this.scene.children);
+	        for (var i = 0; i < intersects.length; i++) {
+	          intersects[i].object.material.color.set(0xffffff);
+	        }
 	      }
 	      //--------------------------------
 
@@ -199,12 +221,12 @@
 	        this.pointer.duration = 0;
 	        this.pointer.state = INPUT_IDLE;
 	      }
-	      for (var i = 0; i < this.keys.length; i++) {
-	        if (this.keys[i].state === INPUT_ACTIVE) {
-	          this.keys[i].duration++;
-	        } else if (this.keys[i].state === INPUT_ENDED) {
-	          this.keys[i].duration = 0;
-	          this.keys[i].state = INPUT_IDLE;
+	      for (var _i = 0; _i < this.keys.length; _i++) {
+	        if (this.keys[_i].state === INPUT_ACTIVE) {
+	          this.keys[_i].duration++;
+	        } else if (this.keys[_i].state === INPUT_ENDED) {
+	          this.keys[_i].duration = 0;
+	          this.keys[_i].state = INPUT_IDLE;
 	        }
 	      }
 	      //--------------------------------
@@ -265,7 +287,7 @@
 	          newActor.geometry = new THREE.SphereGeometry(newActor.size / 2, 32, 32);
 	          newActor.material = new THREE.MeshBasicMaterial({ color: 0xffee33 });
 	          newActor.mesh = new THREE.Mesh(newActor.geometry, newActor.material);
-	          newActor.light = new THREE.PointLight(0xffffff, 1, 50);
+	          newActor.light = new THREE.PointLight(0xcccccc, 1, 50);
 	          break;
 	        default:
 	          break;
@@ -344,12 +366,10 @@
 	  }, {
 	    key: "updateSize",
 	    value: function updateSize() {
-	      /*let boundingBox = (this.canvas.getBoundingClientRect)
-	        ? this.canvas.getBoundingClientRect()
-	        : { left: 0, top: 0 };
+	      var boundingBox = this.canvas.getBoundingClientRect ? this.canvas.getBoundingClientRect() : { left: 0, top: 0 };
 	      this.boundingBox = boundingBox;
-	      this.sizeRatioX = this.width / this.boundingBox.width;
-	      this.sizeRatioY = this.height / this.boundingBox.height;*/
+	      //this.sizeRatioX = this.width / this.boundingBox.width;
+	      //this.sizeRatioY = this.height / this.boundingBox.height;
 	    }
 	  }]);
 
