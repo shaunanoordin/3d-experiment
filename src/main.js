@@ -122,9 +122,9 @@ class App {
     if (this.keys[KEY_CODES.SPACE].state === INPUT_ACTIVE) {
       let phi = this.camera.rotation.y;
       let theta = this.camera.rotation.x;
-      this.camera.position.x -= CAMERA_SPEED * Math.sin(phi);
-      this.camera.position.y += 0;
-      this.camera.position.z -= CAMERA_SPEED * Math.cos(phi);
+      this.camera.position.x += CAMERA_SPEED * Math.cos(theta) * -Math.sin(phi);
+      this.camera.position.z += CAMERA_SPEED * Math.cos(theta) * -Math.cos(phi);
+      this.camera.position.y += CAMERA_SPEED * Math.sin(theta);
     }
     //--------------------------------
     
