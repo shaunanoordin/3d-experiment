@@ -157,21 +157,22 @@ class App {
     switch (type) {
       case "PLANET":
         newActor.geometry = new THREE.SphereGeometry(newActor.size / 2, 32, 32);
-        newActor.material = new THREE.MeshBasicMaterial({color: 0x33cc66});
+        newActor.material = new THREE.MeshLambertMaterial({color: 0x33cc66});
+        newActor.mesh = new THREE.Mesh( newActor.geometry, newActor.material );
         break;
       case "STAR":
         newActor.geometry = new THREE.SphereGeometry(newActor.size / 2, 32, 32);
         newActor.material = new THREE.MeshBasicMaterial({color: 0xffee33});
+        newActor.mesh = new THREE.Mesh(newActor.geometry, newActor.material);
+        newActor.light = new THREE.PointLight(0xffffff, 1, 100);
         break;
       default:
-        newActor.geometry = new THREE.BoxGeometry(newActor.size, newActor.size, newActor.size);
-        newActor.material = new THREE.MeshBasicMaterial({color: 0xffee33});
         break;
     }
     
-    newActor.mesh = new THREE.Mesh( newActor.geometry, newActor.material );
     this.actors.push(newActor);
-    this.scene.add(newActor.mesh);
+    newActor.mesh && this.scene.add(newActor.mesh);
+    newActor.light && this.scene.add(newActor.light);
   }
   
   //----------------------------------------------------------------
@@ -263,14 +264,27 @@ class Actor {
     this.geometry = null;
     this.material = null;
     this._mesh = null;
+    this._light = null;
   }
   
   get x() { return this._x; }
   get y() { return this._y; }
   get z() { return this._z; }
-  set x(val) { this._x = val; this._mesh && (this._mesh.position.x = val); }
-  set y(val) { this._y = val; this._mesh && (this._mesh.position.y = val); }
-  set z(val) { this._z = val; this._mesh && (this._mesh.position.z = val); }
+  set x(val) {
+    this._x = val;
+    this._mesh && (this._mesh.position.x = val);
+    this._light && (this._light.position.x = val);
+  }
+  set y(val) {
+    this._y = val;
+    this._mesh && (this._mesh.position.y = val);
+    this._light && (this._light.position.y = val);
+  }
+  set z(val) {
+    this._z = val;
+    this._mesh && (this._mesh.position.z = val);
+    this._light && (this._light.position.z = val);
+  }
   
   get mesh() { return this._mesh; }
   set mesh(val) {
@@ -278,6 +292,14 @@ class Actor {
     this._mesh.position.x = this._x;
     this._mesh.position.y = this._y;
     this._mesh.position.z = this._z;
+  }
+  
+  get light() { return this._light; }
+  set light(val) {
+    this._light = val;
+    this._light.position.x = this._x;
+    this._light.position.y = this._y;
+    this._light.position.z = this._z;
   }
 }
 //==============================================================================

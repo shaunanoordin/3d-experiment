@@ -178,21 +178,22 @@ var App = function () {
       switch (type) {
         case "PLANET":
           newActor.geometry = new THREE.SphereGeometry(newActor.size / 2, 32, 32);
-          newActor.material = new THREE.MeshBasicMaterial({ color: 0x33cc66 });
+          newActor.material = new THREE.MeshLambertMaterial({ color: 0x33cc66 });
+          newActor.mesh = new THREE.Mesh(newActor.geometry, newActor.material);
           break;
         case "STAR":
           newActor.geometry = new THREE.SphereGeometry(newActor.size / 2, 32, 32);
           newActor.material = new THREE.MeshBasicMaterial({ color: 0xffee33 });
+          newActor.mesh = new THREE.Mesh(newActor.geometry, newActor.material);
+          newActor.light = new THREE.PointLight(0xffffff, 1, 100);
           break;
         default:
-          newActor.geometry = new THREE.BoxGeometry(newActor.size, newActor.size, newActor.size);
-          newActor.material = new THREE.MeshBasicMaterial({ color: 0xffee33 });
           break;
       }
 
-      newActor.mesh = new THREE.Mesh(newActor.geometry, newActor.material);
       this.actors.push(newActor);
-      this.scene.add(newActor.mesh);
+      newActor.mesh && this.scene.add(newActor.mesh);
+      newActor.light && this.scene.add(newActor.light);
     }
 
     //----------------------------------------------------------------
@@ -299,6 +300,7 @@ var Actor = function () {
     this.geometry = null;
     this.material = null;
     this._mesh = null;
+    this._light = null;
   }
 
   _createClass(Actor, [{
@@ -307,7 +309,9 @@ var Actor = function () {
       return this._x;
     },
     set: function set(val) {
-      this._x = val;this._mesh && (this._mesh.position.x = val);
+      this._x = val;
+      this._mesh && (this._mesh.position.x = val);
+      this._light && (this._light.position.x = val);
     }
   }, {
     key: "y",
@@ -315,7 +319,9 @@ var Actor = function () {
       return this._y;
     },
     set: function set(val) {
-      this._y = val;this._mesh && (this._mesh.position.y = val);
+      this._y = val;
+      this._mesh && (this._mesh.position.y = val);
+      this._light && (this._light.position.y = val);
     }
   }, {
     key: "z",
@@ -323,7 +329,9 @@ var Actor = function () {
       return this._z;
     },
     set: function set(val) {
-      this._z = val;this._mesh && (this._mesh.position.z = val);
+      this._z = val;
+      this._mesh && (this._mesh.position.z = val);
+      this._light && (this._light.position.z = val);
     }
   }, {
     key: "mesh",
@@ -335,6 +343,17 @@ var Actor = function () {
       this._mesh.position.x = this._x;
       this._mesh.position.y = this._y;
       this._mesh.position.z = this._z;
+    }
+  }, {
+    key: "light",
+    get: function get() {
+      return this._light;
+    },
+    set: function set(val) {
+      this._light = val;
+      this._light.position.x = this._x;
+      this._light.position.y = this._y;
+      this._light.position.z = this._z;
     }
   }]);
 
